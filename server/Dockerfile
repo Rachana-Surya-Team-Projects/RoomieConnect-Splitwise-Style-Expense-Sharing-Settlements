@@ -10,4 +10,4 @@ RUN npm install -g nodemon
 
 COPY . .
 
-CMD ["npm", "run", "dev"]
+CMD ["sh", "-c", "node scripts/init_db.js && node server.js"]
