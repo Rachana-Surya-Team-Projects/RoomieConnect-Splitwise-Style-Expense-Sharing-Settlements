@@ -1,0 +1,48 @@
+services:
+  db:
+    image: postgres:15
+    environment:
+      POSTGRES_USER: roomie
+      POSTGRES_PASSWORD: roomie
+      POSTGRES_DB: roomieconnect
+    ports:
+      - "5434:5432"
+    volumes:
+      - dbdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U roomie -d roomieconnect"]
+      interval: 3s
+      timeout: 3s
+      retries: 20
+
+  server:
+    build:
+      context: ./server
+    # ✅ IMPORTANT: DO NOT bind-mount ./server:/app (it causes /app EPERM and breaks init_db)
+    env_file:
+      - server/.env
+    environment:
+      DATABASE_URL: postgres://roomie:roomie@db:5432/roomieconnect
+      FRONTEND_ORIGIN: http://localhost:5173
+    ports:
+      - "8080:8080"
+    # ✅ Run init_db on startup (so tables always exist), then start dev server
+    command: sh -c "node scripts/init_db.js && npm run dev"
+    depends_on:
+      db:
+        condition: service_healthy
+
+  client:
+    build:
+      context: ./client
+    # ✅ Client hot-reload is fine to keep
+    volumes:
+      - ./client:/app
+      - /app/node_modules
+    ports:
+      - "5173:5173"
+    depends_on:
+      - server
+
+volumes:
+  dbdata:
