@@ -1,169 +1,218 @@
 # RoomieConnect — Splitwise-Style Expense Sharing & Settlements
 
-RoomieConnect is a **production-style, full-stack expense sharing platform** inspired by Splitwise. It enables roommates and groups to **track shared expenses**, apply **flexible split rules**, compute **real-time balances**, and complete **settlement workflows** (manual and Stripe-backed) with an auditable activity trail.
+RoomieConnect is a **production-style, full-stack expense sharing platform** inspired by Splitwise. It enables roommates, friends, and small groups to **track shared expenses**, apply **flexible split rules**, compute **accurate real-time balances**, and complete **settlement workflows** (manual and Stripe-backed) with a clear, auditable activity trail.
 
-Built with a clean separation between **Vue 3 SPA**, **Express REST APIs**, and a **PostgreSQL ledger-first schema**, RoomieConnect emphasizes **data consistency**, **maintainable modular architecture**, and **deployment-ready containerization**.
+It solves a real-world problem: shared living and group spending quickly becomes messy—who paid, who owes whom, and what changed after edits or settlements. RoomieConnect keeps the **ledger accurate**, the **UI easy to follow**, and **balances consistent across the entire application** after every change.
+
+**Built for:** roommates, travel groups, friends splitting recurring costs, and anyone who wants transparent group finance tracking without spreadsheets.
 
 ---
 
 ## Project Overview
 
-RoomieConnect helps small groups answer the questions that break shared living and group travel finances:
+RoomieConnect helps small groups answer the questions that break shared finances:
 - Who paid for what?
 - How should the cost be split fairly (equal / custom / percent / shares)?
 - Who owes whom right now?
 - What changed after an expense edit or a settlement?
 - Can we settle up cleanly and see a trustworthy history?
 
-The system is designed for **roommates**, **friends**, **travel groups**, and **recurring bill sharing** where correctness, transparency, and UX clarity matter.
+The system is designed with a strong focus on **correctness, transparency, and UX clarity**, making it suitable for real-world use rather than a demo-only prototype.
 
 ---
 
 ## Problem Statement & Motivation
 
-Most shared-expense tracking breaks down due to:
+Most expense-sharing apps break down due to:
 - inconsistent split logic,
 - unclear reconciliation after edits,
-- and balances that don’t reliably reflect settlements.
+- and balances that fail to reflect settlements accurately.
 
-RoomieConnect solves this with a **ledger-style persistence model**:
+RoomieConnect addresses this with a **ledger-based persistence model**:
 - each expense produces durable per-user allocations (`expense_splits`),
 - each settle-up produces durable settlement records (`settlements`),
-- and balances are computed from these sources of truth so the UI remains consistent across pages after any mutation.
+- balances are always computed from these sources of truth.
+
+This approach ensures the UI remains consistent across **Dashboard, Activity, Friends, Groups, Balances, and Transactions** after any mutation.
 
 ---
 
 ## Key Features
 
-- **Authentication**
-  - Email/password registration & login
-  - Secure password hashing with **bcrypt**
-  - Auth-aware routing (Auth layout vs App shell)
+### Authentication
+- Email/password authentication with **bcrypt password hashing**
+- Client-side route protection with persisted login state
+- Separate auth and application layouts
 
-- **Group Management**
-  - Create groups and manage members
-  - Join groups via **join/invite codes**
-  - Automatic creation of a **Personal** group on registration
+### Groups
+- Create groups and invite members via **join codes**
+- Automatic **Personal** group creation on registration for quick onboarding
 
-- **Expense Tracking**
-  - Create expenses with: description, amount, payer, date, participants
-  - Split types implemented end-to-end:
-    - **Equal**
-    - **Unequal (custom amounts)**
-    - **Percent**
-    - **Shares**
-  - Split ledger stored per user for accurate balance reconciliation
+### Expense Tracking
+- Create expenses with description, amount, payer, date, and participants
+- Split support implemented end-to-end:
+  - **Equal**
+  - **Unequal (custom amounts)**
+  - **Percent**
+  - **Shares**
+- Per-user split ledger stored at write-time for reliable balance calculations
 
-- **Expense Details + Edit Expense**
-  - Expense detail view with payer + split breakdown
-  - **Edit Expense** flow (route-driven) supporting all split types
-  - Delete expense support
+### Expense Details
+- Expense detail view with payer and split breakdown
+- **Edit Expense** flow (route-driven) with full split-mode support
+- Delete expense support
 
-- **Balances & Reconciliation**
-  - Group balances computed from expense splits + settlements
-  - Consistent state updates across **Dashboard, Activity, Friends, Groups, Balances, Transactions** after edits and settle-ups
+### Balances & Reconciliation
+- Group balance computation based on:
+  - Expense splits
+  - Settlements (manual and Stripe)
+- Balances update consistently across all screens after edits or settlements
 
-- **Settlement Workflows**
-  - Manual settle-ups
-  - Optional **Stripe PaymentIntent** settle-ups with webhook confirmation
-  - Transaction history for settlements (manual + Stripe)
+### Settlements (Settle Up)
+- Manual settle-up recording
+- **Stripe PaymentIntent** flow (client Payment Element + server intent + webhook)
+- Webhook de-duplication using a unique index on PaymentIntent ID
 
-- **Activity & Transparency**
-  - Activity feed reflecting expense creation/updates and settle-ups
-  - Transactions tab for a clean settlement ledger view
+### Activity & Transactions
+- Group transaction history including settle-ups
+- Activity feed reflecting expense creation, edits, and settlements
+- Friends view reflects balances from both expenses and settlements
 
-- **UX Quality**
-  - Vuetify-driven, consistent UI components
-  - Default **dark theme** with persistence
-  - Loading/error states to support user-friendly failures
+### UI / UX Quality
+- Clean, Vuetify-based UI with a consistent component system
+- Loading and error states for user-friendly failures
+- Default dark theme with persistent user preference
+
+### Operational Readiness
+- Dockerized local development environment
+- Automatic schema initialization and health-checked services
+- Production-style reverse proxy configuration using **Caddy**
 
 ---
 
 ## Tech Stack
 
 ### Frontend
-- **Vue 3** (SPA)
-- **Vite** (build + dev server)
-- **Vuetify** (Material Design UI system)
-- **Vue Router** (route-driven pages, layouts, and guarded flows)
-- REST API integration pattern for clean frontend/backend separation
-- Lightweight global refresh coordination (`client/src/refresh.js`) to maintain cross-page consistency after mutations
+- **Vue 3** (Single Page Application)
+- **Vite** (build and dev tooling)
+- **Vuetify** (Material Design UI components)
+- **Vue Router** (route-based navigation and guards)
+- REST API communication using Fetch/Axios
+- **@vueuse/core** for utility composition helpers
+- **Stripe.js (@stripe/stripe-js)** for Payment Element integration
+
+**State management approach**
+Lightweight reactive coordination via a global `refreshKey` (`client/src/refresh.js`) to trigger cross-page reloads after mutations (edits and settlements), avoiding unnecessary global stores for this scope.
 
 ### Backend
 - **Node.js + Express**
-- Modular **RESTful API** routing by domain (auth, groups, expenses, dashboard, payments)
-- **pg** connection pool for PostgreSQL access
-- Optional Stripe integration via **Stripe Node SDK**
-- Consistent HTTP status codes and safe error responses
+- **PostgreSQL** via `pg`
+- Modular REST API layer:
+  - `/api/auth`
+  - `/api/groups`
+  - `/api/expenses`
+  - `/api/payments`
+  - `/api/dashboard`
+- Stripe server SDK for PaymentIntent creation and webhook handling
+- Environment configuration via `dotenv`
+- Defensive server responses with clear HTTP status codes
 
 ### Database
-- **PostgreSQL**
-- Normalized, ledger-first schema supporting reliable recomputation:
-  - users, groups, group_members
-  - expenses, expense_splits (per-user allocations)
-  - settlements (manual + Stripe-backed)
+- **PostgreSQL (SQL)**
+- Schema designed for consistency and auditability:
+  - `users`, `groups`, `group_members`
+  - `expenses` + `expense_splits` (per-user ledger)
+  - `settlements` (manual and Stripe-backed)
+- Indexes for common access patterns (group timelines, split lookups)
+- Uniqueness constraints to prevent duplicate Stripe webhook inserts
 
-### Infrastructure / DevOps
-- **Docker + Docker Compose** (local and production-style)
-- **Caddy reverse proxy** for production-like single-domain routing:
-  - serves the SPA
-  - proxies `/api/*` to the backend
+### DevOps & Tooling
+- Docker + Docker Compose (local and production compose)
+- Automatic DB initialization (`server/scripts/init_db.js`)
+- Caddy reverse proxy:
+  - Serves the built SPA
+  - Proxies `/api/*` to the backend service
 
 ---
 
 ## System Architecture
 
-RoomieConnect is structured as a scalable, maintainable full-stack system:
+RoomieConnect follows a clean, modular full-stack architecture:
 
-- **Client (Vue SPA)**: UI orchestration, form validation, routing, and user workflows (expenses, edits, settlements).
-- **Server (Express)**: REST API layer, business rules, settlement and split calculations, DB orchestration.
-- **PostgreSQL**: durable source of truth using ledger tables for correctness and auditability.
-- **Reverse Proxy (Caddy)**: production-style routing under a single origin for clean deployments.
+### Client (Vue SPA)
+- Component-driven UI for groups, expenses, balances, activity, friends, and transactions
+- Route-based layouts (auth vs app shell)
+- Mutation actions trigger re-fetches and global refresh signals
 
-**Scalability & maintainability**
-- Modular routes reduce coupling and support feature growth
-- Ledger model enables analytics and historical correctness
-- Containerized infrastructure supports CI/CD-ready deployments
+### Server (Express REST API)
+- Feature-based route modules:
+  - Auth (register/login)
+  - Groups (membership, join codes)
+  - Expenses (CRUD + splits)
+  - Payments (manual settlement + Stripe + webhook)
+  - Dashboard (aggregated totals, friends balances, activity)
 
----
+### Data Layer (PostgreSQL)
+- Transactions and constraints used where appropriate
+- Balance calculations rely on normalized ledger tables for correctness
 
-## Data Flow & API Design
+### Data Flow
+- UI action (create/edit/delete/settle)
+- REST request to server
+- Server validates and writes to ledger tables
+- Client re-fetches impacted views and triggers global refresh
+- Dashboard, Activity, Friends, and Group balances remain consistent
 
-### Frontend ↔ Backend Communication
-- The SPA communicates exclusively via **RESTful APIs** under `/api/*`.
-- Write operations (create/edit/delete/settle) are followed by targeted refetch and a shared refresh signal, keeping the UI consistent across all pages.
-
-### High-Level API Domains
-- **Auth**: registration, login
-- **Groups**: create, join via code, membership reads
-- **Expenses**: CRUD + split persistence
-- **Payments/Settlements**: manual settle-ups, optional Stripe PaymentIntent + webhook
-- **Dashboard**: aggregates and friends balances (includes settlements)
-
----
-
-## Database Design & Schema Philosophy
-
-### Ledger-First Consistency
-RoomieConnect stores:
-- **Expense allocations** as durable per-user rows in `expense_splits`
-- **Settlements** as durable rows in `settlements`
-
-This avoids UI-only reconciliation and ensures balances can always be recomputed correctly from persistent facts.
-
-### Normalization & Relationships
-- `group_members` maps users ↔ groups (many-to-many)
-- `expenses` stores headers; `expense_splits` stores allocations
-- `settlements` records settle-up transfers; optional Stripe metadata supports idempotency
-
-### Transaction Safety
-- User registration performs multi-step writes using a DB transaction to ensure consistent onboarding (user + personal group + membership).
+### Scalability Considerations
+- Clear separation of read and write endpoints
+- Ledger-based schema supports reporting and analytics growth
+- Reverse-proxy-friendly routing supports single-domain deployments
 
 ---
 
-## Folder Structure (Expanded)
+## API Overview (High Level)
 
-Below is the fully expanded repository tree (based on the ZIP contents). Each layer exists to keep the system modular, scalable, and deployment-friendly.
+**Base URL:** `/api`
+
+### Auth
+- `POST /auth/register` — Create user, hash password, create personal group
+- `POST /auth/login` — Verify credentials and return safe user profile
+
+### Groups
+- `GET /groups` — List groups for the user context
+- `GET /groups/:id` — Group details + membership
+- `POST /groups` — Create a new group (with join code)
+- `POST /groups/join` — Join a group via join code
+- `DELETE /groups/:id` — Delete group (where supported)
+- `GET /groups/:id/expenses` — Group expense feed
+- `GET /groups/:id/balances` — Group balances (expenses + settlements)
+- `GET /groups/:id/transactions` — Group transaction history
+- `POST /groups/:id/expenses` — Create expense in group
+
+### Expenses
+- `GET /expenses/group/:groupId` — Expense list by group
+- `GET /expenses/:expenseId` — Expense details
+- `GET /expenses/:expenseId/splits` — Per-user splits for an expense
+- `POST /expenses` — Create expense + splits
+- `PUT /expenses/:expenseId` — Edit expense + rebuild splits
+- `DELETE /expenses/:expenseId` — Delete expense
+
+### Payments / Settlements
+- `POST /payments/settle` — Manual settle-up record
+- `POST /payments/create-intent` — Create Stripe PaymentIntent for settle-up
+- `POST /payments/stripe/webhook` — Stripe webhook to finalize settlement write
+- `GET /payments/settle/group/:groupId` — Group settle-up entries
+- `GET /payments/transactions/group/:groupId` — Transaction feed for group
+
+### Dashboard
+- `GET /dashboard/user/:userId` — Aggregated dashboard totals and recents
+- `GET /dashboard/friends/:userId` — Friend balances (expenses + settlements)
+
+---
+
+## Folder Structure
+
+The repository is organized to keep responsibilities isolated and easy to review.
 
 ```text
 roomieconnect/
@@ -228,11 +277,6 @@ roomieconnect/
 └── docker-compose.yml
 ```
 
-### Key Architectural Notes
-- **`client/`** contains the Vue 3 SPA, organized by components, layouts, router, and shared refresh coordination.
-- **`server/`** contains the Express API, domain-routed modules, DB access, and scripts for schema bootstrap and seeding.
-- **`docker-compose*.yml` + `Caddyfile`** enable containerized development and production-style deployment patterns.
-
 ---
 
 ## Setup & Installation
@@ -240,67 +284,81 @@ roomieconnect/
 ### Prerequisites
 - Node.js 18+
 - Docker + Docker Compose
-- (Optional) Stripe keys for Stripe settle-ups
+- PostgreSQL (only if running without Docker)
+- Stripe account (optional; only required for Stripe settle-ups)
 
 ### Environment Variables (names only)
-**Server**
+
+**Server (e.g., `server/.env`)**
 - `DATABASE_URL`
+- `STRIPE_SECRET_KEY` (optional; required for Stripe flow)
+- `STRIPE_WEBHOOK_SECRET` (optional; required for webhook verification)
 - `FRONTEND_ORIGIN`
-- `PORT`
-- `STRIPE_SECRET_KEY` (optional)
-- `STRIPE_WEBHOOK_SECRET` (optional)
+- `PORT` (optional; defaults to 8080 in this project)
 
-**Client**
-- `VITE_API_URL` (API base URL used by the frontend)
-- `VITE_STRIPE_PUBLISHABLE_KEY` (optional)
+**Client (e.g., `client/.env`)**
+- `VITE_STRIPE_PUBLISHABLE_KEY` (optional; required for Stripe Payment Element)
 
-### Run Locally (Docker — Recommended)
+### Run Locally (Recommended: Docker)
+
+From the repo root:
 ```bash
 docker compose up --build
 ```
-- Frontend: http://localhost:5173  
-- Backend: http://localhost:8080  
 
-### Production-Style Stack (Reverse Proxy + SPA)
+- Client: http://localhost:5173  
+- Server: http://localhost:8080  
+- Postgres: exposed on localhost:5434 (dev compose)
+
+### Run Frontend/Backend Separately (Without Docker)
+
+**Backend**
 ```bash
-docker compose -f docker-compose.prod.yml up --build
+cd server
+npm install
+npm run dev
 ```
-> Update the host in `Caddyfile` (e.g., `yourdomain.com`) before deploying.
+
+**Frontend**
+```bash
+cd client
+npm install
+npm run dev
+```
 
 ---
 
-## Reliability, Performance & Error Handling
-
-- Ledger-based persistence ensures balances remain correct after edits and settlements
-- App-wide refresh signaling prevents stale UI state after writes
-- API returns safe error messages and appropriate status codes
-- Database schema bootstrap ensures environments remain reproducible across local/dev/prod
-- Index-friendly access patterns support timeline reads and split lookups as data grows
+## Reliability & Quality
+- Consistent balance updates after expense edits, deletes, and settlements
+- Global refresh mechanism ensures UI stays in sync
+- Defensive checks for invalid splits and self-settlements
+- Indexes ensure predictable performance for timelines and splits
 
 ---
 
 ## Security & Best Practices
+- Passwords stored as bcrypt hashes
+- Server-side validation and safe error responses
+- Environment-based configuration (no secrets committed)
+- Stripe webhook handling designed for retry safety
 
-- Passwords stored as **bcrypt hashes** (never plaintext)
-- Environment-based configuration (no secrets hardcoded in source)
-- Controlled CORS via `FRONTEND_ORIGIN`
-- Production-ready considerations:
-  - add JWT/session cookies and group-level authorization
-  - implement rate limiting, request logging, and stricter validation
-  - store secrets in a managed vault (AWS SSM/Secrets Manager, Render secrets, etc.)
+**Production hardening recommendations**
+- JWT or session-based authentication
+- Role-based authorization
+- Rate limiting and request logging
+- Managed secrets storage
 
 ---
 
 ## Future Enhancements
-
-- Hardened auth (JWT/session cookies + refresh tokens)
-- Role-based permissions (group admins, member controls)
-- Notifications (in-app/email) for expenses and settle-ups
-- Analytics (spend trends, categories, insights)
-- Mobile-first UI and/or native mobile client
-- Performance improvements (pagination, query batching, caching)
-- Observability (structured logs, metrics dashboards, health checks)
-- CI/CD pipeline integration for automated deployments
+- JWT/session-based auth with refresh tokens
+- Role-based access control
+- Notifications (email/in-app)
+- Advanced analytics and insights
+- Mobile-friendly UX or native app
+- Performance optimizations (pagination, batching)
+- Observability and CI/CD integration
+- Multi-currency support
 
 ---
 
@@ -316,12 +374,12 @@ This project was **equally designed, implemented, and tested** by both:
 
 Equal responsibilities included:
 - Frontend architecture & UI/UX development (Vue 3 + Vuetify)
-- Backend API design & implementation (Express.js, RESTful endpoints)
+- Backend API design & implementation (Express.js)
 - Database schema design & normalization (PostgreSQL)
-- SQL development (DDL, DML, constraints, joins) and balance reconciliation queries
-- Settlement & balance calculation logic (expense splits + settle-ups)
-- Performance optimization & indexing strategy (ledger-first access patterns)
-- Docker & environment configuration (local + production-style compose)
-- Server setup & reverse proxy configuration (Caddy for SPA + `/api` routing)
-- End-to-end testing & debugging across the full stack
-- Documentation & demo preparation for recruiter/hiring-manager review
+- SQL development (DDL, DML, constraints, joins)
+- Settlement and balance calculation logic
+- Performance optimization & indexing
+- Docker & environment configuration
+- Server setup & reverse proxy configuration
+- End-to-end testing & debugging
+- Documentation & demo preparation
