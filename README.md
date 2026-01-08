@@ -1,4 +1,4 @@
-# RoomieConnect — Splitwise-Style Expense Sharing & Settlements
+# RoomieConnect — Splitwise-Style Expense Sharing & Settlements Platform
 
 RoomieConnect is a **production-style, full-stack expense sharing platform** inspired by Splitwise. It enables roommates, friends, and small groups to **track shared expenses**, apply **flexible split rules**, compute **accurate real-time balances**, and complete **settlement workflows** (manual and Stripe-backed) with a clear, auditable activity trail.
 
