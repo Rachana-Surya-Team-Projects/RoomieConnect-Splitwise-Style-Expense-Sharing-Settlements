@@ -328,6 +328,87 @@ npm run dev
 
 ---
 
+## 🚀 Deployment
+
+RoomieConnect is deployed on **Render** using a production-ready architecture with **separate services** for the frontend, backend API, and database. This setup mirrors real-world cloud deployments with clear separation of concerns, secure configuration management, and independent scalability.
+
+---
+
+### 🌐 Live Services
+
+#### Frontend — Static Site
+- **URL:** https://roomieconnect-web.onrender.com  
+- **Render Service:** `roomieconnect-web`  
+- **Type:** Static Site  
+- **Tech:** Vue 3 + Vite
+
+The frontend is built using Vite and deployed as a static site. It communicates with the backend exclusively via REST APIs.
+
+---
+
+#### Backend — API Service
+- **URL:** https://roomieconnect-api.onrender.com  
+- **Render Service:** `roomieconnect-api`  
+- **Type:** Web Service  
+- **Tech:** Node.js + Express
+
+The backend exposes `/api/*` endpoints for authentication, groups, expenses, settlements, and dashboard aggregation. It connects securely to the PostgreSQL database using environment-based configuration.
+
+---
+
+#### Database — Managed PostgreSQL
+- **Render Service:** `roomieconnect-db`  
+- **Type:** Managed PostgreSQL
+
+The database acts as the system’s durable source of truth, storing users, groups, expenses, per-user split ledgers, and settlements. Ledger-based persistence ensures balances can always be recomputed accurately.
+
+---
+
+### 🔐 Environment & Secrets Management
+
+- No secrets are committed to GitHub  
+- `.env` files are used **only locally** and are excluded from version control  
+- All production secrets are configured via **Render Environment Variables**  
+- Separate environment configuration is maintained for frontend and backend services  
+
+**Frontend (Render Static Site)**
+```env
+VITE_API_URL=https://roomieconnect-api.onrender.com/api
+VITE_STRIPE_PUBLISHABLE_KEY=<publishable_key>
+```
+
+**Backend (Render Web Service)**
+```env
+DATABASE_URL=<render_postgres_url>
+STRIPE_SECRET_KEY=<stripe_secret_key>
+STRIPE_WEBHOOK_SECRET=<stripe_webhook_secret>
+FRONTEND_ORIGIN=https://roomieconnect-web.onrender.com
+PORT=8080
+```
+
+---
+
+### 🔄 Deployment Flow
+
+1. Code is pushed to GitHub  
+2. Render automatically installs dependencies and builds services  
+3. Environment variables are injected securely  
+4. Frontend and backend deploy independently  
+5. Frontend communicates with backend over HTTPS  
+6. Backend connects to managed PostgreSQL via internal networking  
+
+---
+
+### 📈 Deployment Benefits
+
+- Clean separation of frontend, API, and database  
+- Secure secret handling with zero credential leakage  
+- Stateless backend design enables horizontal scaling  
+- CDN-backed static frontend for fast load times  
+- CI/CD-ready workflow with automatic deployments on push  
+
+---
+
 ## Reliability & Quality
 - Consistent balance updates after expense edits, deletes, and settlements
 - Global refresh mechanism ensures UI stays in sync
