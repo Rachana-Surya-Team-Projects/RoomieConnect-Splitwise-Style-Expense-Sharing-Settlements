@@ -443,7 +443,7 @@ PORT=8080
 
 ---
 
-## 👥 Team Contributions
+## 👥 Team Contributions 
 
 This project was **equally designed, implemented, and tested** by both:
 
