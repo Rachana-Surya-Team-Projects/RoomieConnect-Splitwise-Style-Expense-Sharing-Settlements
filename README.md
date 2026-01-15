@@ -357,7 +357,7 @@ The backend exposes `/api/*` endpoints for authentication, groups, expenses, set
 ---
 
 #### Database — Managed PostgreSQL
-- **Render Service:** `roomieconnect-db`  
+- **Supabase Service:** `roomieconnect-db`  
 - **Type:** Managed PostgreSQL
 
 The database acts as the system’s durable source of truth, storing users, groups, expenses, per-user split ledgers, and settlements. Ledger-based persistence ensures balances can always be recomputed accurately.
